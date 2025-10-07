@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Flight Estimator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1b1b1b, #4b0082);
+            color: #e6e6e6;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            padding: 2rem;
+            background-color: rgba(25, 25, 25, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #d1a3ff;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #cfcfcf;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #6a0dad;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .btn:hover {
+            background-color: #4b0082;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flight Time Estimator</h1>
+        <p>This application is designed to estimate the flight duration between two user-specified locations. It calculates the approximate travel time by air and also identifies the nearest airports to both the departure and destination points.</p>
+        <p>Click the button below to start estimating your journey time.</p>
+        <a href="/login" class="btn">Sign in</a>
+    </div>
+</body>
+</html>

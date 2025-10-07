@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #553c9a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #6d48c6;
+        }
+        .back-button {
+            background-color: #553c9a;
+            margin-right: 5px;
+        }
+        .loading {
+            display: none;
+            margin-left: 10px;
+            color: #aaa;
+        }
+        .search-tips {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+        }
+        .flight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .flight-card {
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #1e1e1e;
+        }
+        .flight-header {
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .flight-info {
+            margin-bottom: 5px;
+            color: #bbb;
+        }
+        .flight-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-scheduled { background-color: #263859; color: #7fa1e8; }
+        .status-active { background-color: #1b4332; color: #74c88a; }
+        .status-landed { background-color: #333333; color: #aaaaaa; }
+        .status-cancelled { background-color: #561212; color: #ff8080; }
+        .status-diverted { background-color: #614815; color: #ffd07f; }
+        
+        /* Filter Styles */
+        .filters {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+        .filters h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #ddd;
+        }
+        .filters h4 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #ccc;
+        }
+        .filter-row {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .filter-row label {
+            width: 120px;
+            display: inline-block;
+            color: #bbb;
+        }
+        .filter-row select, .filter-row input {
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+        .filter-group {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        #clearFilters {
+            background-color: #553c9a;
+            margin-top: 10px;
+        }
+        .filter-active {
+            background-color: #2a2a3a;
+            border: 1px solid #553c9a;
+        }
+        .filter-badge {
+            display: inline-block;
+            background-color: #2f2747;
+            color: #b899ff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        .active-filters {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            color: #bbb;
+        }
+        h1 {
+            color: #fff;
+            border-bottom: 2px solid #553c9a;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Flight Search</h1>
+    
+    <div class="search-container">
+        <form id="searchForm">
+            <input type="text" id="searchQuery" placeholder="Search by flight number, airport code, or airline name">
+            <button type="button" class="back-button" onclick="window.location.href='index'">Back</button>
+            <button type="submit">Search</button>
+            <span class="loading" id="loading">Searching...</span>
+            
+            <div class="filters">
+                <h3>Filters</h3>
+                <div class="filter-row">
+                    <label for="flightStatus">Flight Status:</label>
+                    <select id="flightStatus">
+                        <option value="">All</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="active">Active (In Air)</option>
+                        <option value="landed">Landed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="diverted">Diverted</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <h4>Departure Time</h4>
+                    <div class="filter-row">
+                        <label for="minDepartureTime">From:</label>
+                        <input type="datetime-local" id="minDepartureTime">
+                    </div>
+                    <div class="filter-row">
+                        <label for="maxDepartureTime">To:</label>
+                        <input type="datetime-local" id="maxDepartureTime">
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <h4>Arrival Time</h4>
+                    <div class="filter-row">
+                        <label for="minArrivalTime">From:</label>
+                        <input type="datetime-local" id="minArrivalTime">
+                    </div>
+                    <div class="filter-row">
+                        <label for="maxArrivalTime">To:</label>
+                        <input type="datetime-local" id="maxArrivalTime">
+                    </div>
+                </div>
+                
+                <button type="button" id="clearFilters">Clear Filters</button>
+            </div>
+        </form>
+        <div class="search-tips">
+            Examples:
+            <ul>
+                <li>Flight number: BA123, DL1004</li>
+                <li>Airport code: LHR, JFK, LAX</li>
+                <li>Airline name: British Airways, Delta</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div id="errorContainer" class="error"></div>
+    <div id="resultsContainer"></div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchFlights();
+        });
+        
+        // Initialize clear filters button
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            document.getElementById('flightStatus').value = '';
+            document.getElementById('minDepartureTime').value = '';
+            document.getElementById('maxDepartureTime').value = '';
+            document.getElementById('minArrivalTime').value = '';
+            document.getElementById('maxArrivalTime').value = '';
+            
+            // If there's a search query, redo the search with cleared filters
+            if (document.getElementById('searchQuery').value.trim()) {
+                searchFlights();
+            }
+        });
+
+        function searchFlights() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const loadingIndicator = document.getElementById('loading');
+            const errorContainer = document.getElementById('errorContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            // Get filter values
+            const flightStatus = document.getElementById('flightStatus').value;
+            const minDepartureTime = document.getElementById('minDepartureTime').value;
+            const maxDepartureTime = document.getElementById('maxDepartureTime').value;
+            const minArrivalTime = document.getElementById('minArrivalTime').value;
+            const maxArrivalTime = document.getElementById('maxArrivalTime').value;
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'inline';
+            errorContainer.textContent = '';
+            
+            // Create form data for the POST request
+            const formData = new FormData();
+            formData.append('query', query);
+            
+            // Add filters to form data
+            if (flightStatus) formData.append('flight_status', flightStatus);
+            if (minDepartureTime) formData.append('min_departure_time', formatDateForAPI(minDepartureTime));
+            if (maxDepartureTime) formData.append('max_departure_time', formatDateForAPI(maxDepartureTime));
+            if (minArrivalTime) formData.append('min_arrival_time', formatDateForAPI(minArrivalTime));
+            if (maxArrivalTime) formData.append('max_arrival_time', formatDateForAPI(maxArrivalTime));
+            
+            // Send the search request
+            fetch('/search', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                
+                if (data.error) {
+                    errorContainer.textContent = 'Error: ' + data.error;
+                    resultsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Display the results
+                displayResults(data);
+                
+                // Highlight active filters
+                highlightActiveFilters();
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                errorContainer.textContent = 'Error: ' + error.message;
+                resultsContainer.innerHTML = '';
+            });
+        }
+        
+        // Format date for API (YYYY-MM-DD format)
+        function formatDateForAPI(dateTimeString) {
+            if (!dateTimeString) return '';
+            const date = new Date(dateTimeString);
+            return date.toISOString();
+        }
+        
+        // Highlight active filters
+        function highlightActiveFilters() {
+            const filtersDiv = document.querySelector('.filters');
+            const hasActiveFilters = 
+                document.getElementById('flightStatus').value || 
+                document.getElementById('minDepartureTime').value || 
+                document.getElementById('maxDepartureTime').value || 
+                document.getElementById('minArrivalTime').value || 
+                document.getElementById('maxArrivalTime').value;
+                
+            if (hasActiveFilters) {
+                filtersDiv.classList.add('filter-active');
+                
+                // Create active filters summary
+                let activeFiltersHTML = '<div class="active-filters">Active filters: ';
+                
+                if (document.getElementById('flightStatus').value) {
+                    const status = document.getElementById('flightStatus');
+                    activeFiltersHTML += `<span class="filter-badge">Status: ${status.options[status.selectedIndex].text}</span>`;
+                }
+                
+                if (document.getElementById('minDepartureTime').value) {
+                    activeFiltersHTML += `<span class="filter-badge">Departure after: ${new Date(document.getElementById('minDepartureTime').value).toLocaleString()}</span>`;
+                }
+                
+                if (document.getElementById('maxDepartureTime').value) {
+                    activeFiltersHTML += `<span class="filter-badge">Departure before: ${new Date(document.getElementById('maxDepartureTime').value).toLocaleString()}</span>`;
+                }
+                
+                if (document.getElementById('minArrivalTime').value) {
+                    activeFiltersHTML += `<span class="filter-badge">Arrival after: ${new Date(document.getElementById('minArrivalTime').value).toLocaleString()}</span>`;
+                }
+                
+                if (document.getElementById('maxArrivalTime').value) {
+                    activeFiltersHTML += `<span class="filter-badge">Arrival before: ${new Date(document.getElementById('maxArrivalTime').value).toLocaleString()}</span>`;
+                }
+                
+                activeFiltersHTML += '</div>';
+                
+                // Add the active filters summary before the results
+                const resultsContainer = document.getElementById('resultsContainer');
+                if (!document.querySelector('.active-filters')) {
+                    resultsContainer.insertAdjacentHTML('beforebegin', activeFiltersHTML);
+                } else {
+                    document.querySelector('.active-filters').outerHTML = activeFiltersHTML;
+                }
+            } else {
+                filtersDiv.classList.remove('filter-active');
+                if (document.querySelector('.active-filters')) {
+                    document.querySelector('.active-filters').remove();
+                }
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            if (!data.data || data.data.length === 0) {
+                resultsContainer.innerHTML = '<p>No flights found. Try a different search term or adjust your filters.</p>';
+                return;
+            }
+            
+            const flightsHtml = document.createElement('div');
+            flightsHtml.className = 'flight-grid';
+            
+            data.data.forEach(flight => {
+                const departure = flight.departure || {};
+                const arrival = flight.arrival || {};
+                const airline = flight.airline || {};
+                const flight_status = flight.flight_status || 'unknown';
+                
+                const flightCard = document.createElement('div');
+                flightCard.className = 'flight-card';
+                
+                let statusClass = 'status-' + flight_status.toLowerCase();
+                if (!['scheduled', 'active', 'landed', 'cancelled', 'diverted'].includes(flight_status.toLowerCase())) {
+                    statusClass = '';
+                }
+                
+                flightCard.innerHTML = `
+                    <div class="flight-header">
+                        ${airline.name || 'Unknown Airline'} - ${flight.flight.iata || 'N/A'}
+                        <span class="flight-status ${statusClass}">${flight_status.toUpperCase()}</span>
+                    </div>
+                    <div class="flight-info"><strong>From:</strong> ${departure.airport || 'N/A'} (${departure.iata || 'N/A'})</div>
+                    <div class="flight-info"><strong>To:</strong> ${arrival.airport || 'N/A'} (${arrival.iata || 'N/A'})</div>
+                    <div class="flight-info"><strong>Departure:</strong> ${departure.scheduled ? new Date(departure.scheduled).toLocaleString() : 'N/A'}</div>
+                    <div class="flight-info"><strong>Arrival:</strong> ${arrival.scheduled ? new Date(arrival.scheduled).toLocaleString() : 'N/A'}</div>
+                `;
+                
+                flightsHtml.appendChild(flightCard);
+            });
+            
+            resultsContainer.innerHTML = '';
+            resultsContainer.appendChild(flightsHtml);
+        }
+    </script>
+</body>
+</html>
